@@ -4,29 +4,35 @@ on:
     branches:
       - main
 
+env:
+  IMAGE_NAME: keycloak
+  IMAGE_TAG: 18.0.2
+  IMAGE_SOURCE: keycloak
+  REGISTRY: quay.io
+
 jobs:
-  export-keycloak-image:
+  export-image:
     runs-on: ubuntu-latest
 
     steps:
-     # - name: Checkout Code
-      #  uses: actions/checkout@v2
+      - name: Checkout Code
+        uses: actions/checkout@v2
 
       - name: Pull target image
-        run: docker pull quay.io/keycloak/keycloak:18.0.2
+        run: docker pull quay.io/$IMAGE_SOURCE/$IMAGE_NAME:$IMAGE_TAG
         env:
           DOCKER_USERNAME: ${{ secrets.QUAYIO_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.QUAYIO_PWD }}
 
       - name: Tag downloaded image
-        run: docker tag quay.io/keycloak/keycloak:18.0.2 keycloak:18.0.2
+        run: docker tag quay.io/$IMAGE_SOURCE/$IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG 
 
       - name: Save tagged image
-        run: docker save -o keycloak-18.0.2.tar keycloak:18.0.2
+        run: docker save -o $IMAGE_NAME-$IMAGE_TAG.tar $IMAGE_NAME:$IMAGE_TAG
 
       - name: Upload image as artifact
         uses: actions/upload-artifact@v2
         with:
-          name: keycloak-image
-          path: keycloak-18.0.2.tar
+          name: $IMAGE_NAME-$IMAGE_TAG
+          path: $IMAGE_NAME-$IMAGE_TAG.tar
 
