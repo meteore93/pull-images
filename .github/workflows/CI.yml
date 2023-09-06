@@ -19,16 +19,16 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Pull target image
-        run: docker pull quay.io/$IMAGE_SOURCE/$IMAGE_NAME:$IMAGE_TAG
+        run: echo "docker pull quay.io/$IMAGE_SOURCE/$IMAGE_NAME:$IMAGE_TAG"
         env:
           DOCKER_USERNAME: ${{ secrets.QUAYIO_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.QUAYIO_PWD }}
 
       - name: Tag downloaded image
-        run: docker tag quay.io/$IMAGE_SOURCE/$IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG 
+        run: echo "docker tag quay.io/$IMAGE_SOURCE/$IMAGE_NAME $IMAGE_NAME:$IMAGE_TAG"
 
       - name: Save tagged image
-        run: docker save -o $IMAGE_NAME-$IMAGE_TAG.tar $IMAGE_NAME:$IMAGE_TAG
+        run: echo "docker save -o $IMAGE_NAME-$IMAGE_TAG.tar $IMAGE_NAME:$IMAGE_TAG"
 
       - name: Upload image as artifact
         uses: actions/upload-artifact@v2
