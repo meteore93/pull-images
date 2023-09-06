@@ -9,21 +9,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v2
+     # - name: Checkout Code
+      #  uses: actions/checkout@v2
 
       - name: Download and Export Keycloak Image
         run: |
           docker pull quay.io/keycloak/keycloak:18.0.2
-          docker tag quay.io/keycloak/keycloak:18.0.2 keycloak:18.0.2
-          docker save -o keycloak-18.0.2.tar keycloak:18.0.
+          #docker tag quay.io/keycloak/keycloak:18.0.2 keycloak:18.0.2
+          #docker save -o keycloak-18.0.2.tar keycloak:18.0.
         env:
           DOCKER_USERNAME: ${{ secrets.QUAYIO_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.QUAYIO_PWD }}
 
-      - name: Upload Keycloak Image Tarball
-        uses: actions/upload-artifact@v2
-        with:
-          name: keycloak-image
-          path: keycloak-18.0.2.tar
+      #- name: Upload Keycloak Image Tarball
+       # uses: actions/upload-artifact@v2
+        #with:
+         # name: keycloak-image
+          #path: keycloak-18.0.2.tar
 
