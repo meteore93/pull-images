@@ -1,0 +1,29 @@
+name: Download and Export Keycloak Image
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  export-keycloak-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Download and Export Keycloak Image
+        run: |
+          docker pull quay.io/keycloak/keycloak:18.0.3
+          docker tag quay.io/keycloak/keycloak:18.0.3 keycloak:18.0.3
+          docker save -o keycloak-18.0.3.tar keycloak:18.0.3
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Upload Keycloak Image Tarball
+        uses: actions/upload-artifact@v2
+        with:
+          name: keycloak-image
+          path: keycloak-18.0.3.tar
+
