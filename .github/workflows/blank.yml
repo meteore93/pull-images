@@ -14,16 +14,16 @@ jobs:
 
       - name: Download and Export Keycloak Image
         run: |
-          docker pull quay.io/keycloak/keycloak:18.0.3
-          docker tag quay.io/keycloak/keycloak:18.0.3 keycloak:18.0.3
-          docker save -o keycloak-18.0.3.tar keycloak:18.0.3
+          docker pull quay.io/keycloak/keycloak:18.0.2
+          docker tag quay.io/keycloak/keycloak:18.0.2 keycloak:18.0.2
+          docker save -o keycloak-18.0.2.tar keycloak:18.0.
         env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+          DOCKER_USERNAME: ${{ secrets.QUAYIO_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.QUAYIO_PWD }}
 
       - name: Upload Keycloak Image Tarball
         uses: actions/upload-artifact@v2
         with:
           name: keycloak-image
-          path: keycloak-18.0.3.tar
+          path: keycloak-18.0.2.tar
 
