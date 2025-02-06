@@ -1,5 +1,4 @@
-# Téléchargement d'images docker
-
+# Téléchargement d'images pour import offline
 Permet de télécharger des images au format zip, qu'on pourra ensuite importer sur un serveur offline à partir de la commande "docker load -i <artefact-dézippé>.
 
 ## Variables
