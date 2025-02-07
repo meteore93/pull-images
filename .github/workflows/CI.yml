@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Pull target image
         run: docker pull quay.io/$IMAGE_SOURCE/$IMAGE_NAME:$IMAGE_TAG
@@ -31,7 +31,7 @@ jobs:
         run: docker save -o $IMAGE_NAME-$IMAGE_TAG.tar $IMAGE_NAME:$IMAGE_TAG
 
       - name: Upload image as artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: $IMAGE_NAME-$IMAGE_TAG
           path: $IMAGE_NAME-$IMAGE_TAG.tar
