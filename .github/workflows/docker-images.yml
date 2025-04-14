@@ -1,35 +1,35 @@
 name: Download RPM Packages
-  on:
-    workflow_dispatch:
-      inputs:
-        images:
-          description: 'Nom de l'image à télécharger'
-          required: true
-          default: 'nginx'
-        registry:
-          description: "Registre à partir duquel télécharger l'image"
-          required: false
-          default: 'docker.io'
-        image_path:
-          description: "Chemin au sein du repo de l'image"
-          required: true
-          default: "/"
-        image_tag:
-          description: "Version de l'image à télécharger
-          required: true
-          default: latest
-        container_engine:
-          description: 'Podman ou Docker, conditionne quel CLI est utilisé'
-          required: true
-          type: choice
-          options:
-            - docker
-            - podman
-          default: docker
-        artifact_name:
-          description: "Nom de l'artefact exporté"
-          required: true
-          default: 'image'
+on:
+  workflow_dispatch:
+    inputs:
+      images:
+        description: "Nom de l'image à télécharger"
+        required: true
+        default: 'nginx'
+      registry:
+        description: "Registre à partir duquel télécharger l'image"
+        required: false
+        default: 'docker.io'
+      image_path:
+        description: "Chemin au sein du repo de l'image"
+        required: true
+        default: "/"
+      image_tag:
+        description: "Version de l'image à télécharger
+        required: true
+        default: latest
+      container_engine:
+        description: 'Podman ou Docker, conditionne quel CLI est utilisé'
+        required: true
+        type: choice
+        options:
+          - docker
+          - podman
+        default: docker
+      artifact_name:
+        description: "Nom de l'artefact exporté"
+        required: true
+        default: 'image'
 
 jobs:
   pull_image:
