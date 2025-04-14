@@ -1,7 +1,24 @@
-name: Download Docker RPMs for RHEL/CentOS 8
+name: Download RPM Packages
 
 on:
-  workflow_dispatch:  # Permet de déclencher le workflow manuellement
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Liste des paquets à télécharger (séparés par des espaces)'
+        required: true
+        default: 'docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin'
+      el_version:
+        description: 'Version Enterprise Linux (7, 8, 9)'
+        required: true
+        default: '8'
+      extra_repos:
+        description: "URLs des dépôts supplémentaires (séparés par des virgules)"
+        required: false
+        default: 'https://download.docker.com/linux/centos/docker-ce.repo'
+      artifact_name:
+        description: "Nom de l'artefact"
+        required: true
+        default: 'downloaded-rpms'
 
 jobs:
   download-rpms:
@@ -15,57 +32,85 @@ jobs:
 
       - name: Create script to run in container
         run: |
-          cat > download-docker-rpms.sh << 'EOF'
+          cat > download-rpms.sh << 'EOF'
           #!/bin/bash
           set -e
 
+          # Paramètres reçus
+          PACKAGES="${1}"
+          EXTRA_REPOS="${2}"
+          
+          # Fix pour les problèmes DNS potentiels
           echo "nameserver 8.8.8.8" > /etc/resolv.conf
           echo "nameserver 1.1.1.1" >> /etc/resolv.conf
           
+          # Vérifier la connectivité
           ping -c 2 google.com || echo "Warning: Ping failed but continuing"
           
+          # Installer les outils nécessaires
           dnf install -y yum-utils createrepo dnf-plugins-core
-
-          mkdir -p /docker-rpms
-
-          dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-
-          # Vérifier les dépôts disponibles
-          dnf repolist
           
-          cd /docker-rpms
-          yumdownloader --resolve docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+          # Créer un répertoire pour les téléchargements
+          mkdir -p /rpm-packages
           
-          yumdownloader docker-swarm || echo "docker-swarm package non disponible, continuons"
-
-          # Liste des packages téléchargés
+          # Ajouter les dépôts supplémentaires
+          IFS=',' read -ra REPO_URLS <<< "$EXTRA_REPOS"
+          for REPO_URL in "${REPO_URLS[@]}"; do
+            if [[ -n "$REPO_URL" ]]; then
+              echo "Ajout du dépôt: $REPO_URL"
+              dnf config-manager --add-repo="$REPO_URL"
+            fi
+          done
+          
+          dnf makecache
+          
+      
+          cd /rpm-packages
+          echo "Téléchargement des paquets: $PACKAGES"
+          for PKG in $PACKAGES; do
+            echo "Téléchargement de $PKG..."
+            yumdownloader --resolve "$PKG" || echo "Avertissement: Impossible de télécharger $PKG, on continue"
+          done
+          
           echo "Packages téléchargés:"
-          ls -la /docker-rpms
+          ls -la /rpm-packages
           EOF
           
-          chmod +x download-docker-rpms.sh
+          chmod +x download-rpms.sh
 
-      - name: Run Rocky Linux 8 container to download RPMs
+      - name: Run container to download RPMs
         run: |
           # Créer un répertoire local pour stocker les RPMs
-          mkdir -p docker-rpms
+          mkdir -p rpm-packages
           
+          if [ "${{ github.event.inputs.el_version }}" = "7" ]; then
+            IMAGE="centos:7"
+          elif [ "${{ github.event.inputs.el_version }}" = "9" ]; then
+            IMAGE="rockylinux:9"
+          else
+            IMAGE="rockylinux:8"
+          fi
+          
+          echo "Utilisation de l'image: $IMAGE"
+          
+          # Exécuter le conteneur avec le script
           docker run --rm \
             --dns 8.8.8.8 --dns 1.1.1.1 \
-            -v $(pwd)/download-docker-rpms.sh:/download-docker-rpms.sh \
-            -v $(pwd)/docker-rpms:/docker-rpms \
-            rockylinux:8 \
-            /download-docker-rpms.sh
-
-          echo "Contenu du répertoire docker-rpms:"
-          ls -la docker-rpms
+            -v $(pwd)/download-rpms.sh:/download-rpms.sh \
+            -v $(pwd)/rpm-packages:/rpm-packages \
+            $IMAGE \
+            /download-rpms.sh "${{ github.event.inputs.packages }}" "${{ github.event.inputs.extra_repos }}"
+          
+          # Vérifier les RPMs téléchargés
+          echo "Contenu du répertoire rpm-packages:"
+          ls -la rpm-packages
 
       - name: Archive RPMs
         run: |
-          tar -czvf docker-el8-rpms.tar.gz docker-rpms/
+          tar -czvf ${{ github.event.inputs.artifact_name }}.tar.gz rpm-packages/
 
       - name: Upload RPM archive as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: docker-el8-rpms
-          path: docker-el8-rpms.tar.gz
+          name: ${{ github.event.inputs.artifact_name }}
+          path: ${{ github.event.inputs.artifact_name }}.tar.gz
