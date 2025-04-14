@@ -2,7 +2,7 @@ name: Download RPM Packages
 on:
   workflow_dispatch:
     inputs:
-      images:
+      image:
         description: "Nom de l'image à télécharger"
         required: true
         default: 'nginx'
@@ -54,8 +54,7 @@ jobs:
         run: |
               ${{ inputs.container_engine }} save -o ${{ inputs.image }}-${{ inputs.image_tag }}.tar \
               ${{ inputs.image }}:${{ inputs.image_tag }}
-  
-  upload_image:
+
       - name: Upload image as artifact
         uses: actions/upload-artifact@v4
         with:
