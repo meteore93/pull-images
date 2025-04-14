@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: Download-rpm-dependencies
 
 # Controls when the workflow will run
 on:
@@ -24,11 +24,17 @@ jobs:
 
       - name: Ensure no previous version is installed
         run: |
-              sudo yum install \
+              sudo repotrack --arch=x86_64 --destdir=/tmp/ \
                       docker-ce \
                       docker-ce-cli \
                       containerd.io \
                       docker-buildx-plugin \
                       docker-compose-plugin \
                       --allowerasing
+  
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4.6.2
+          with:
+            name: test.tar
+            path: /tmp/*.rpm
 
