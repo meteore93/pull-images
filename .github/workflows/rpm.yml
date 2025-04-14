@@ -42,7 +42,7 @@ jobs:
 
           PACKAGES="${1}"
           EXTRA_REPOS="${2}"
-          EXTRA_REPOS="${2}"
+          PACKAGES_TO_REMOVE="${3}"
           
           dnf install -y yum-utils createrepo dnf-plugins-core
           
@@ -105,7 +105,9 @@ jobs:
             -v $(pwd)/download-rpms.sh:/download-rpms.sh \
             -v $(pwd)/rpm-packages:/rpm-packages \
             $IMAGE \
-            /download-rpms.sh "${{ github.event.inputs.packages }}" "${{ github.event.inputs.extra_repos }}"
+            /download-rpms.sh "${{ github.event.inputs.packages }}"\
+                              "${{ github.event.inputs.extra_repos }}"\
+                              "${{ github.event.inputs.packages_to_remove }}"
           
           # Vérifier les RPMs téléchargés
           echo "Contenu du répertoire rpm-packages:"
