@@ -15,7 +15,7 @@ on:
         required: true
         default: "/"
       image_tag:
-        description: "Version de l'image à télécharger
+        description: "Version de l'image à télécharger"
         required: true
         default: latest
       container_engine:
