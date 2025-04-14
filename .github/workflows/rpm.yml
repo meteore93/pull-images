@@ -15,6 +15,10 @@ on:
         description: "URLs des dépôts supplémentaires (séparés par des virgules)"
         required: false
         default: 'https://download.docker.com/linux/centos/docker-ce.repo'
+      packages_to_remove:
+        description: 'Paquets à désinstaller avant téléchargement (séparés par des espaces)'
+        required: false
+        default: 'podman podman-docker'
       artifact_name:
         description: "Nom de l'artefact"
         required: true
@@ -36,24 +40,14 @@ jobs:
           #!/bin/bash
           set -e
 
-          # Paramètres reçus
           PACKAGES="${1}"
           EXTRA_REPOS="${2}"
+          EXTRA_REPOS="${2}"
           
-          # Fix pour les problèmes DNS potentiels
-          echo "nameserver 8.8.8.8" > /etc/resolv.conf
-          echo "nameserver 1.1.1.1" >> /etc/resolv.conf
-          
-          # Vérifier la connectivité
-          ping -c 2 google.com || echo "Warning: Ping failed but continuing"
-          
-          # Installer les outils nécessaires
           dnf install -y yum-utils createrepo dnf-plugins-core
           
-          # Créer un répertoire pour les téléchargements
           mkdir -p /rpm-packages
           
-          # Ajouter les dépôts supplémentaires
           IFS=',' read -ra REPO_URLS <<< "$EXTRA_REPOS"
           for REPO_URL in "${REPO_URLS[@]}"; do
             if [[ -n "$REPO_URL" ]]; then
@@ -61,6 +55,18 @@ jobs:
               dnf config-manager --add-repo="$REPO_URL"
             fi
           done
+        
+          if [[ -n "$PACKAGES_TO_REMOVE" ]]; then
+            echo "Vérification et suppression des paquets conflictuels: $PACKAGES_TO_REMOVE"
+            for PKG in $PACKAGES_TO_REMOVE; do
+              if rpm -q "$PKG" > /dev/null 2>&1; then
+                echo "Suppression de $PKG..."
+                dnf remove -y "$PKG"
+              else
+                echo "$PKG n'est pas installé, aucune action nécessaire..."
+              fi
+            done
+          fi
           
           dnf makecache
           
@@ -69,7 +75,7 @@ jobs:
           echo "Téléchargement des paquets: $PACKAGES"
           for PKG in $PACKAGES; do
             echo "Téléchargement de $PKG..."
-            yumdownloader --resolve "$PKG" || echo "Avertissement: Impossible de télécharger $PKG, on continue"
+            yumdownloader --resolve "$PKG" || echo "Avertissement: Impossible de télécharger $PKG..."
           done
           
           echo "Packages téléchargés:"
