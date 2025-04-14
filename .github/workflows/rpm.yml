@@ -51,19 +51,14 @@ jobs:
           IFS=',' read -ra REPO_URLS <<< "$EXTRA_REPOS"
           for REPO_URL in "${REPO_URLS[@]}"; do
             if [[ -n "$REPO_URL" ]]; then
-              echo "Ajout du dépôt: $REPO_URL"
               dnf config-manager --add-repo="$REPO_URL"
             fi
           done
         
           if [[ -n "$PACKAGES_TO_REMOVE" ]]; then
-            echo "Vérification et suppression des paquets conflictuels: $PACKAGES_TO_REMOVE"
             for PKG in $PACKAGES_TO_REMOVE; do
               if rpm -q "$PKG" > /dev/null 2>&1; then
-                echo "Suppression de $PKG..."
                 dnf remove -y "$PKG"
-              else
-                echo "$PKG n'est pas installé, aucune action nécessaire..."
               fi
             done
           fi
@@ -72,13 +67,10 @@ jobs:
           
       
           cd /rpm-packages
-          echo "Téléchargement des paquets: $PACKAGES"
           for PKG in $PACKAGES; do
-            echo "Téléchargement de $PKG..."
-            yumdownloader --resolve "$PKG" || echo "Avertissement: Impossible de télécharger $PKG..."
+            yumdownloader --resolve "$PKG"
           done
           
-          echo "Packages téléchargés:"
           ls -la /rpm-packages
           EOF
           
@@ -86,7 +78,6 @@ jobs:
 
       - name: Run container to download RPMs
         run: |
-          # Créer un répertoire local pour stocker les RPMs
           mkdir -p rpm-packages
           
           if [ "${{ github.event.inputs.el_version }}" = "7" ]; then
@@ -97,9 +88,7 @@ jobs:
             IMAGE="rockylinux:8"
           fi
           
-          echo "Utilisation de l'image: $IMAGE"
           
-          # Exécuter le conteneur avec le script
           docker run --rm \
             --dns 8.8.8.8 --dns 1.1.1.1 \
             -v $(pwd)/download-rpms.sh:/download-rpms.sh \
@@ -110,7 +99,6 @@ jobs:
                               "${{ github.event.inputs.packages_to_remove }}"
           
           # Vérifier les RPMs téléchargés
-          echo "Contenu du répertoire rpm-packages:"
           ls -la rpm-packages
 
       - name: Archive RPMs
