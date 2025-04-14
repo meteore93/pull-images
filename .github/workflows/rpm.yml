@@ -25,10 +25,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Docker
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: Create script to run in container
         run: |
@@ -110,7 +110,7 @@ jobs:
           tar -czvf ${{ github.event.inputs.artifact_name }}.tar.gz rpm-packages/
 
       - name: Upload RPM archive as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ github.event.inputs.artifact_name }}
           path: ${{ github.event.inputs.artifact_name }}.tar.gz
