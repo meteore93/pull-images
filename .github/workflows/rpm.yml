@@ -1,35 +1,64 @@
-name: Download Docker RPMs
+name: Download Docker RPMs for CentOS 8
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:  
 
 jobs:
   download-rpms:
     runs-on: ubuntu-latest
     steps:
-      - name: Set up environment
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Create script to run in container
+        run: |
+          cat > download-docker-rpms.sh << 'EOF'
+          #!/bin/bash
+          set -e
+
+          dnf install -y yum-utils createrepo
+          mkdir -p /docker-rpms
+
+          dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+
+          cd /docker-rpms
+          yumdownloader --resolve \
+                        docker-ce \
+                        docker-ce-cli \
+                        containerd.io \
+                        docker-buildx-plugin \
+                        docker-compose-plugin \
+                        docker-swarm
+
+          # Liste des packages téléchargés
+          echo "Packages téléchargés:"
+          ls -la /docker-rpms
+          EOF
+          
+          chmod +x download-docker-rpms.sh
+
+      - name: Run CentOS 8 container to download RPMs
         run: |
           mkdir -p docker-rpms
+          
+          docker run --rm \
+            -v $(pwd)/download-docker-rpms.sh:/download-docker-rpms.sh \
+            -v $(pwd)/docker-rpms:/docker-rpms \
+            quay.io/centos/centos:stream8 \
+            /download-docker-rpms.sh
 
-      - name: Download Docker RPMs
-        run: |
-          curl -fsSL https://download.docker.com/linux/centos/docker-ce.repo -o docker-ce.repo
-          sudo mv docker-ce.repo /etc/yum.repos.d/
-          
-          sudo apt-get update
-          sudo apt-get install -y yum-utils
-          
-          cd docker-rpms
-          yumdownloader --resolve docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin docker-ce-swarm
-          
+          echo "Contenu du répertoire docker-rpms:"
+          ls -la docker-rpms
 
       - name: Archive RPMs
         run: |
-          tar -czvf docker-rpms.tar.gz docker-rpms/
+          tar -czvf docker-centos8-rpms.tar.gz docker-rpms/
 
       - name: Upload RPM archive as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
-          name: docker-rpms-archive
+          name: docker-centos8-rpms
           path: docker-rpms.tar.gz
-          retention-days: 7
